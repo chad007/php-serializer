@@ -533,7 +533,17 @@ class Serializer
             try {
                 $propRef = $rc->getProperty($propertyName);
                 $propRef->setAccessible(true);
-                $data[$propertyName] = $propRef->getValue($value);
+                
+                $extractedValue = $propRef->getValue($value);
+                try {
+                    $this->guardForUnsupportedValues($extractedValue);
+                }catch (SerializerException $e)
+                {
+                    // skip it
+                    continue;
+                }
+                
+                $data[$propertyName] = $extractedValue;
             } catch (ReflectionException $e) {
                 $data[$propertyName] = $value->$propertyName;
             }
@@ -552,7 +562,17 @@ class Serializer
             /* @var $property \ReflectionProperty */
             foreach ($rc->getProperties() as $property) {
                 $property->setAccessible(true);
-                $rp[$property->getName()] = $property->getValue($this);
+                
+                $extractedValue = $property->getValue($this);
+                try {
+                    $this->guardForUnsupportedValues($extractedValue);
+                }catch (SerializerException $e)
+                {
+                    // skip it
+                    continue;
+                }
+                
+                $rp[$property->getName()] = $extractedValue;
             }
             $data = \array_merge($rp, $data);
         } while ($rc = $rc->getParentClass());
